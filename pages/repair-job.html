@@ -836,11 +836,9 @@
               <div>
                 <h2 id="form-card-title">Repair job information</h2>
                 <p id="linked-vessel">
-                  Linked to vessel:
-                  <strong>OBM Pioneer</strong>
-                  <span>(IMO: 1234567)</span>
+                  Select a vessel to link to this repair record.
                 </p>
-                <span class="link-indicator" id="link-indicator">
+                <span class="link-indicator" id="link-indicator" hidden>
                   <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.2" />
                     <path d="m4.8 8.1 2.1 2.1 4.3-4.4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
@@ -853,9 +851,17 @@
             <form class="repair-form" id="repair-form" novalidate>
               <div class="field-grid">
                 <div class="field">
-                  <label for="reference-number">Unique Reference Number</label>
-                  <input id="reference-number" name="referenceNumber" type="text" readonly aria-describedby="reference-hint" />
-                  <span class="field-hint" id="reference-hint">Automatically assigned to this repair record.</span>
+                  <label for="vessel-select">Vessel <span class="required-mark">*</span></label>
+                  <select id="vessel-select" name="vesselId" required aria-describedby="vessel-error">
+                    <option value="" selected disabled>Loading vessels...</option>
+                  </select>
+                  <span class="field-error" id="vessel-error"></span>
+                </div>
+
+                <div class="field">
+                  <label for="repair-title">Repair Title <span class="required-mark">*</span></label>
+                  <input id="repair-title" name="title" type="text" placeholder="e.g. Main engine inspection" required aria-describedby="title-error" />
+                  <span class="field-error" id="title-error"></span>
                 </div>
 
                 <div class="field">
@@ -911,50 +917,43 @@
         <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4" />
         <path d="m6.8 10.2 2.1 2.1 4.4-4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
       </svg>
-      <span>Repair record updated successfully. Available for repair planning and cost estimation.</span>
+      <span>Repair record created successfully.</span>
     </div>
 
+    <div class="toast toast-error" id="error-toast" role="alert" aria-live="assertive" hidden>
+      <span id="error-toast-message"></span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
-      const params = new URLSearchParams(window.location.search);
-      const hasLinkedVessel = params.has("registration");
-      const vessel = {
-        name: params.get("name") || "OBM Pioneer",
-        registration: params.get("registration") || "OBM-2024-001",
-        imo: params.has("imo") ? params.get("imo") : "1234567",
-      };
       const repairForm = document.querySelector("#repair-form");
       const successToast = document.querySelector("#success-toast");
-      const year = new Date().getFullYear();
-      const sequenceKey = `vesselsync.repair-sequence.${year}`;
-      const nextSequence = Number(localStorage.getItem(sequenceKey) || "1");
-
-      if (!Number.isSafeInteger(nextSequence) || nextSequence < 1) {
-        throw new Error("Unable to generate a valid repair reference number.");
-      }
-
-      localStorage.setItem(sequenceKey, String(nextSequence + 1));
-      document.querySelector("#reference-number").value =
-        `RJ-${year}-${String(nextSequence).padStart(3, "0")}`;
+      const errorToast = document.querySelector("#error-toast");
+      const errorToastMessage = document.querySelector("#error-toast-message");
+      const submitButton = repairForm.querySelector('button[type="submit"]');
+      const vesselSelect = document.querySelector("#vessel-select");
+      const repairTitleInput = document.querySelector("#repair-title");
+      const repairDescriptionInput = document.querySelector("#repair-description");
+      const repairDateInput = document.querySelector("#repair-date");
+      const jobStatusInput = document.querySelector("#job-status");
+      const linkedVessel = document.querySelector("#linked-vessel");
+      const linkIndicator = document.querySelector("#link-indicator");
 
       document.querySelector("#today-label").textContent = new Intl.DateTimeFormat(
         "en",
         { weekday: "short", day: "numeric", month: "short", year: "numeric" },
       ).format(new Date());
 
-      const linkedVessel = document.querySelector("#linked-vessel");
-      linkedVessel.innerHTML = `
-        Linked to vessel:
-        <strong>${escapeHtml(vessel.name)}</strong>
-        <span>${vessel.imo ? `(IMO: ${escapeHtml(vessel.imo)})` : "(IMO not provided)"}</span>`;
-
-      if (hasLinkedVessel) {
-        const vesselProfileUrl = new URL("vessel-profile.html", window.location.href);
-        params.forEach((value, key) => vesselProfileUrl.searchParams.set(key, value));
-        document.querySelector("#cancel-link").href = vesselProfileUrl.href;
+      function showError(message) {
+        errorToastMessage.textContent = message;
+        errorToast.hidden = false;
+        successToast.hidden = true;
+        errorToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
 
       function escapeHtml(value) {
-        return value.replace(/[&<>"']/g, (character) => ({
+        return String(value).replace(/[&<>"']/g, (character) => ({
           "&": "&amp;",
           "<": "&lt;",
           ">": "&gt;",
@@ -963,9 +962,34 @@
         })[character]);
       }
 
+      function updateLinkedVessel() {
+        const selectedOption = vesselSelect.options[vesselSelect.selectedIndex];
+
+        if (!selectedOption || !vesselSelect.value) {
+          linkedVessel.textContent = "Select a vessel to link to this repair record.";
+          linkIndicator.hidden = true;
+          return;
+        }
+
+        linkedVessel.innerHTML = `Linked to vessel: <strong>${escapeHtml(selectedOption.dataset.name)}</strong><span>(${escapeHtml(selectedOption.dataset.registration)})</span>`;
+        linkIndicator.hidden = false;
+      }
+
       const requiredFields = [
         {
-          input: document.querySelector("#repair-description"),
+          input: vesselSelect,
+          error: document.querySelector("#vessel-error"),
+          message: "Vessel selection is required",
+          isValid: (input) => input.value.length > 0,
+        },
+        {
+          input: repairTitleInput,
+          error: document.querySelector("#title-error"),
+          message: "Repair title is required",
+          isValid: (input) => input.value.trim().length > 0,
+        },
+        {
+          input: repairDescriptionInput,
           error: document.querySelector("#description-error"),
           message: "Repair description is required",
           isValid: (input) => input.value.trim().length > 0,
@@ -998,27 +1022,120 @@
           }
         });
         field.input.addEventListener("change", () => {
+          if (field.input === vesselSelect) {
+            updateLinkedVessel();
+          }
           if (repairForm.dataset.submitted === "true") {
             validateField(field);
           }
         });
       });
 
-      repairForm.addEventListener("submit", (event) => {
+      async function loadVessels() {
+        const { data: vessels, error } = await supabaseClient
+          .from("vessels")
+          .select("id, vessel_name, registration_number")
+          .order("vessel_name");
+
+        if (error) {
+          console.error("Unable to load vessels for repair creation.", error);
+          vesselSelect.innerHTML = '<option value="">Vessels could not be loaded</option>';
+          vesselSelect.disabled = true;
+          showError("Vessels could not be loaded. Please try again.");
+          return;
+        }
+
+        vesselSelect.innerHTML = '<option value="" selected disabled>Select a vessel</option>';
+        vessels.forEach((vessel) => {
+          const option = document.createElement("option");
+          option.value = vessel.id;
+          option.textContent = `${vessel.vessel_name} (${vessel.registration_number})`;
+          option.dataset.name = vessel.vessel_name;
+          option.dataset.registration = vessel.registration_number;
+          vesselSelect.append(option);
+        });
+      }
+
+      repairForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         repairForm.dataset.submitted = "true";
         const invalidFields = requiredFields.filter((field) => !validateField(field));
 
         if (invalidFields.length > 0) {
           successToast.hidden = true;
+          errorToast.hidden = true;
           invalidFields[0].input.focus();
           return;
         }
 
-        successToast.hidden = false;
-        successToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        submitButton.disabled = true;
+        submitButton.setAttribute("aria-busy", "true");
+        errorToast.hidden = true;
+
+        try {
+          const { data: authData, error: authError } =
+            await supabaseClient.auth.getUser();
+
+          if (authError || !authData.user) {
+            showError("You must be signed in to create a repair record.");
+            return;
+          }
+
+          const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("role")
+            .eq("user_id", authData.user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error("Unable to retrieve the user's profile role.", profileError);
+            showError("Your account profile could not be verified.");
+            return;
+          }
+
+          if (!profile || (profile.role !== "admin" && profile.role !== "staff")) {
+            showError("Only Admin and Staff users can create repair records.");
+            return;
+          }
+
+          const { error: insertError } = await supabaseClient.from("repairs").insert({
+            vessel_id: vesselSelect.value,
+            repair_title: repairTitleInput.value.trim(),
+            repair_description: repairDescriptionInput.value.trim(),
+            repair_date: repairDateInput.value,
+            status: jobStatusInput.value,
+            created_by: authData.user.id,
+          });
+
+          if (insertError) {
+            console.error("Unable to create repair record.", insertError);
+            showError(
+              insertError.code === "42703" || insertError.code === "PGRST204"
+                ? "The repairs table is missing the required status field."
+                : "The repair record could not be created. Please try again.",
+            );
+            return;
+          }
+
+          repairForm.reset();
+          repairForm.dataset.submitted = "false";
+          requiredFields.forEach((field) => {
+            field.input.removeAttribute("aria-invalid");
+            field.error.textContent = "";
+          });
+          updateLinkedVessel();
+          successToast.hidden = false;
+          successToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (error) {
+          console.error("Unexpected repair creation error.", error);
+          showError("The repair record could not be created. Please try again.");
+        } finally {
+          submitButton.disabled = false;
+          submitButton.removeAttribute("aria-busy");
+        }
       });
 
+      loadVessels();
     </script>
   </body>
 </html>

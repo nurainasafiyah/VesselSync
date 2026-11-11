@@ -915,9 +915,7 @@
             return;
           }
 
-          showLoginError(
-            `Login successful as ${profile.role}. Dashboard access will be added in a later sprint.`
-          );
+          window.location.assign("dashboard-vessel-list.html");
         } catch (error) {
           console.error("Unexpected login error.", error);
           showLoginError("Login is temporarily unavailable. Please try again.");
