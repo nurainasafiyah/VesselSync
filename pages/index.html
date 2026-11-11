@@ -828,14 +828,8 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
-      const SUPABASE_URL = "https://hjdcaszrklttanplobrk.supabase.co";
-      const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_29gZsZOawCBoaIWbKTSyRw_b6Y9O2p1";
-      const supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-      );
-
       const loginForm = document.querySelector("#login-form");
       const usernameInput = document.querySelector("#username");
       const passwordInput = document.querySelector("#password");

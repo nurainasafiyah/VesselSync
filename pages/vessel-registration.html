@@ -689,6 +689,12 @@
         animation: toast-in 180ms ease-out both;
       }
 
+      .toast-error {
+        border-color: #f0d2d2;
+        background: #fff5f5;
+        color: #9c2f2f;
+      }
+
       .toast[hidden] {
         display: none;
       }
@@ -1017,27 +1023,44 @@
       <span>Vessel successfully registered!</span>
     </div>
 
+    <div class="toast toast-error" id="error-toast" role="alert" aria-live="assertive" hidden>
+      <span id="error-toast-message"></span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
       const vesselForm = document.querySelector("#vessel-form");
       const successToast = document.querySelector("#success-toast");
+      const errorToast = document.querySelector("#error-toast");
+      const errorToastMessage = document.querySelector("#error-toast-message");
+      const submitButton = vesselForm.querySelector('button[type="submit"]');
+      const vesselNameInput = document.querySelector("#vessel-name");
+      const registrationNumberInput = document.querySelector("#registration-number");
+      const vesselTypeInput = document.querySelector("#vessel-type");
+      const lengthInput = document.querySelector("#length");
+      const grossTonnageInput = document.querySelector("#gross-tonnage");
+      const engineDetailsInput = document.querySelector("#engine-details");
+      const serialNumberInput = document.querySelector("#serial-number");
+      const pumpsInput = document.querySelector("#pumps");
       const requiredFields = [
         {
-          input: document.querySelector("#vessel-name"),
+          input: vesselNameInput,
           error: document.querySelector("#vessel-name-error"),
           isValid: (input) => input.value.trim().length > 0,
         },
         {
-          input: document.querySelector("#registration-number"),
+          input: registrationNumberInput,
           error: document.querySelector("#registration-number-error"),
           isValid: (input) => input.value.trim().length > 0,
         },
         {
-          input: document.querySelector("#vessel-type"),
+          input: vesselTypeInput,
           error: document.querySelector("#vessel-type-error"),
           isValid: (input) => input.value.length > 0,
         },
         {
-          input: document.querySelector("#length"),
+          input: lengthInput,
           error: document.querySelector("#length-error"),
           invalidMessage: "Length must be greater than 0",
           isValid: (input) => input.value !== "" && input.validity.valid,
@@ -1073,19 +1096,93 @@
         });
       });
 
-      vesselForm.addEventListener("submit", (event) => {
+      function showError(message) {
+        errorToastMessage.textContent = message;
+        errorToast.hidden = false;
+        successToast.hidden = true;
+        errorToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      vesselForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         vesselForm.dataset.submitted = "true";
         const invalidFields = requiredFields.filter((field) => !validateField(field));
 
         if (invalidFields.length > 0) {
           successToast.hidden = true;
+          errorToast.hidden = true;
           invalidFields[0].input.focus();
           return;
         }
 
-        successToast.hidden = false;
-        successToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        submitButton.disabled = true;
+        submitButton.setAttribute("aria-busy", "true");
+        errorToast.hidden = true;
+
+        try {
+          const { data: authData, error: authError } =
+            await supabaseClient.auth.getUser();
+
+          if (authError || !authData.user) {
+            showError("You must be signed in to register a vessel.");
+            return;
+          }
+
+          const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("role")
+            .eq("user_id", authData.user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error("Unable to retrieve the user's profile role.", profileError);
+            showError("Your account profile could not be verified.");
+            return;
+          }
+
+          if (!profile || (profile.role !== "admin" && profile.role !== "staff")) {
+            showError("Only Admin and Staff users can register vessels.");
+            return;
+          }
+
+          const { error: insertError } = await supabaseClient.from("vessels").insert({
+            vessel_name: vesselNameInput.value.trim(),
+            registration_number: registrationNumberInput.value.trim(),
+            vessel_type: vesselTypeInput.value,
+            length_m: Number(lengthInput.value),
+            gross_tonnage:
+              grossTonnageInput.value === "" ? null : Number(grossTonnageInput.value),
+            engine_details: engineDetailsInput.value.trim() || null,
+            serial_number: serialNumberInput.value.trim() || null,
+            pumps: pumpsInput.value.trim() || null,
+            created_by: authData.user.id,
+          });
+
+          if (insertError) {
+            console.error("Unable to register vessel.", insertError);
+            showError(
+              insertError.code === "23505"
+                ? "That registration number is already in use."
+                : "The vessel could not be registered. Please try again.",
+            );
+            return;
+          }
+
+          vesselForm.reset();
+          vesselForm.dataset.submitted = "false";
+          requiredFields.forEach((field) => {
+            field.input.removeAttribute("aria-invalid");
+            field.error.textContent = "";
+          });
+          successToast.hidden = false;
+          successToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (error) {
+          console.error("Unexpected vessel registration error.", error);
+          showError("The vessel could not be registered. Please try again.");
+        } finally {
+          submitButton.disabled = false;
+          submitButton.removeAttribute("aria-busy");
+        }
       });
     </script>
   </body>
