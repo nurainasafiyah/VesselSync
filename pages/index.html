@@ -827,14 +827,24 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+      const SUPABASE_URL = "https://hjdcaszrklttanplobrk.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_29gZsZOawCBoaIWbKTSyRw_b6Y9O2p1";
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
       const loginForm = document.querySelector("#login-form");
       const usernameInput = document.querySelector("#username");
       const passwordInput = document.querySelector("#password");
       const errorBanner = document.querySelector("#login-error");
+      const errorMessage = document.querySelector("#error-message");
       const passwordToggle = document.querySelector("#password-toggle");
       const accessToggle = document.querySelector("#access-toggle");
       const accessDetails = document.querySelector("#access-details");
+      const loginButton = loginForm.querySelector('button[type="submit"]');
 
       function clearLoginError() {
         errorBanner.hidden = true;
@@ -842,11 +852,85 @@
         passwordInput.removeAttribute("aria-invalid");
       }
 
-      loginForm.addEventListener("submit", (event) => {
-        event.preventDefault();
+      function showLoginError(message) {
+        errorMessage.textContent = message;
         errorBanner.hidden = false;
-        usernameInput.setAttribute("aria-invalid", String(!usernameInput.value.trim()));
-        passwordInput.setAttribute("aria-invalid", String(!passwordInput.value));
+      }
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearLoginError();
+
+        const email = usernameInput.value.trim();
+        const password = passwordInput.value;
+        const hasEmail = Boolean(email);
+        const hasPassword = Boolean(password);
+
+        usernameInput.setAttribute("aria-invalid", String(!hasEmail));
+        passwordInput.setAttribute("aria-invalid", String(!hasPassword));
+
+        if (!hasEmail || !hasPassword) {
+          showLoginError("Enter your email and password to continue.");
+          return;
+        }
+
+        loginButton.disabled = true;
+        loginButton.setAttribute("aria-busy", "true");
+
+        try {
+          const { data: authData, error: signInError } =
+            await supabaseClient.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+          if (signInError) {
+            showLoginError("The email or password is incorrect. Please try again.");
+            return;
+          }
+
+          const user = authData.user;
+
+          if (!user) {
+            showLoginError("Login could not be completed. Please try again.");
+            return;
+          }
+
+          const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("role")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error("Unable to retrieve the user's profile role.", profileError);
+            showLoginError("Your account profile could not be loaded. Please contact an administrator.");
+            await supabaseClient.auth.signOut();
+            return;
+          }
+
+          if (!profile) {
+            showLoginError("Your account does not have a profile yet. Please contact an administrator.");
+            await supabaseClient.auth.signOut();
+            return;
+          }
+
+          if (profile.role !== "admin" && profile.role !== "staff") {
+            showLoginError("Your account has an invalid role. Please contact an administrator.");
+            await supabaseClient.auth.signOut();
+            return;
+          }
+
+          showLoginError(
+            `Login successful as ${profile.role}. Dashboard access will be added in a later sprint.`
+          );
+        } catch (error) {
+          console.error("Unexpected login error.", error);
+          showLoginError("Login is temporarily unavailable. Please try again.");
+        } finally {
+          loginButton.disabled = false;
+          loginButton.removeAttribute("aria-busy");
+        }
       });
 
       usernameInput.addEventListener("input", clearLoginError);
