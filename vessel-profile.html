@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="View vessel particulars, equipment, and repair history in VesselSync."
+    />
+    <meta name="theme-color" content="#f5f7fa" />
+    <title>Vessel Profile | VesselSync</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #202630;
+        background: #f5f7fa;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        --maroon: #800000;
+        --maroon-dark: #680b18;
+        --line: #e7e9ed;
+        --canvas: #f5f7fa;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 1024px;
+        min-height: 100vh;
+        margin: 0;
+        background: var(--canvas);
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid rgb(128 0 0 / 22%);
+        outline-offset: 3px;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        z-index: 5;
+        inset: 0 auto 0 0;
+        display: flex;
+        width: 252px;
+        flex-direction: column;
+        border-right: 1px solid #e9ebef;
+        background: #fff;
+      }
+
+      .brand-lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        padding: 27px 25px 31px;
+        color: #202630;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid #eadcdd;
+        border-radius: 11px;
+        background: #fbf6f6;
+        color: var(--maroon);
+      }
+
+      .brand-mark svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .brand-name {
+        font-size: 17px;
+        font-weight: 720;
+        letter-spacing: -0.045em;
+      }
+
+      .brand-name span {
+        font-weight: 460;
+      }
+
+      .nav-label {
+        margin: 0;
+        padding: 0 25px 11px;
+        color: #9aa2ad;
+        font-size: 9px;
+        font-weight: 690;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .primary-nav {
+        display: grid;
+        gap: 5px;
+        padding: 0 13px;
+      }
+
+      .nav-item {
+        display: flex;
+        width: 100%;
+        min-height: 43px;
+        align-items: center;
+        gap: 12px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #65707c;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 540;
+        text-align: left;
+        text-decoration: none;
+        transition:
+          background 140ms ease,
+          color 140ms ease;
+      }
+
+      .nav-item:hover {
+        background: #f7f5f5;
+        color: #303943;
+      }
+
+      .nav-item.is-active {
+        background: #f8eeee;
+        color: var(--maroon);
+        font-weight: 650;
+      }
+
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .sidebar-bottom {
+        display: grid;
+        gap: 16px;
+        margin-top: auto;
+        padding: 17px 13px 18px;
+      }
+
+      .workspace-card {
+        display: grid;
+        gap: 5px;
+        padding: 14px;
+        border: 1px solid #eee9e9;
+        border-radius: 9px;
+        background: #fcfafa;
+      }
+
+      .workspace-label {
+        color: #969ea7;
+        font-size: 9px;
+        font-weight: 650;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .workspace-name {
+        color: #414b56;
+        font-size: 11px;
+        font-weight: 620;
+      }
+
+      .workspace-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #858e98;
+        font-size: 10px;
+      }
+
+      .workspace-status::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4a9d77;
+        content: "";
+      }
+
+      .logout-link {
+        display: flex;
+        min-height: 41px;
+        align-items: center;
+        gap: 11px;
+        padding: 0 12px;
+        border-radius: 7px;
+        color: #66717d;
+        font-size: 12px;
+        text-decoration: none;
+      }
+
+      .logout-link:hover {
+        background: #f8eeee;
+        color: var(--maroon);
+      }
+
+      .logout-link svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .main-area {
+        min-height: 100vh;
+        margin-left: 252px;
+      }
+
+      .main-content {
+        width: min(100%, 1500px);
+        margin: 0 auto;
+        padding: 35px clamp(28px, 4vw, 58px) 50px;
+      }
+
+      .topbar {
+        display: flex;
+        min-height: 49px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #98a0a9;
+        font-size: 11px;
+      }
+
+      .breadcrumb a {
+        color: #858e99;
+        text-decoration: none;
+      }
+
+      .breadcrumb a:hover {
+        color: var(--maroon);
+      }
+
+      .breadcrumb svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .breadcrumb strong {
+        max-width: 210px;
+        overflow: hidden;
+        color: #59636f;
+        font-weight: 570;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .today-label {
+        color: #89929d;
+        font-size: 11px;
+      }
+
+      .icon-button {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid #e8eaee;
+        border-radius: 9px;
+        background: #fff;
+        color: #626d79;
+        cursor: pointer;
+      }
+
+      .icon-button:hover {
+        border-color: #e1cbcd;
+        color: var(--maroon);
+      }
+
+      .icon-button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .user-menu {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding-left: 13px;
+        border-left: 1px solid #e7e9ed;
+      }
+
+      .avatar {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 50%;
+        background: #f0e2e3;
+        color: var(--maroon);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .user-details {
+        display: grid;
+        gap: 3px;
+      }
+
+      .user-details strong {
+        color: #39434e;
+        font-size: 11px;
+        font-weight: 630;
+      }
+
+      .user-details span {
+        color: #959da7;
+        font-size: 9px;
+      }
+
+      .profile-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin: 35px 0 26px;
+      }
+
+      .profile-heading-copy {
+        min-width: 0;
+      }
+
+      .page-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        color: var(--maroon);
+        font-size: 9px;
+        font-weight: 690;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .page-eyebrow::before {
+        width: 17px;
+        height: 1px;
+        background: #bd8589;
+        content: "";
+      }
+
+      .profile-title-line {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+
+      .profile-title-line h1 {
+        max-width: 660px;
+        margin: 0;
+        overflow: hidden;
+        color: #232b35;
+        font-size: clamp(26px, 3vw, 34px);
+        font-weight: 640;
+        letter-spacing: -0.055em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .profile-registration {
+        margin: 8px 0 0;
+        color: #808a95;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.025em;
+      }
+
+      .profile-registration span {
+        margin-right: 5px;
+        color: #a0a7af;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        min-height: 23px;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        border-radius: 20px;
+        font-size: 9px;
+        font-weight: 590;
+        white-space: nowrap;
+      }
+
+      .status-pill::before {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        content: "";
+      }
+
+      .status-operational {
+        background: #edf6f0;
+        color: #39805c;
+      }
+
+      .status-maintenance {
+        background: #fbf3e5;
+        color: #a87520;
+      }
+
+      .profile-actions {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 39px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 14px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 620;
+        text-decoration: none;
+        transition:
+          background 140ms ease,
+          border-color 140ms ease,
+          box-shadow 140ms ease,
+          transform 140ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .button svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .button-secondary {
+        border-color: #dedfe4;
+        background: #fff;
+        color: #59646f;
+      }
+
+      .button-secondary:hover {
+        border-color: #d3b6b9;
+        background: #fcf8f8;
+        color: var(--maroon);
+      }
+
+      .button-primary {
+        border-color: var(--maroon);
+        background: var(--maroon);
+        box-shadow: 0 4px 10px rgb(128 0 0 / 12%);
+        color: #fff;
+      }
+
+      .button-primary:hover {
+        border-color: var(--maroon-dark);
+        background: var(--maroon-dark);
+        box-shadow: 0 5px 13px rgb(128 0 0 / 18%);
+      }
+
+      .profile-card {
+        overflow: hidden;
+        border: 1px solid #e8eaee;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgb(39 46 56 / 3%);
+      }
+
+      .tab-list {
+        display: flex;
+        align-items: stretch;
+        gap: 25px;
+        padding: 0 25px;
+        border-bottom: 1px solid #e9ebef;
+      }
+
+      .tab-button {
+        position: relative;
+        display: inline-flex;
+        min-height: 50px;
+        align-items: center;
+        gap: 8px;
+        padding: 0 2px;
+        border: 0;
+        background: transparent;
+        color: #77818d;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 560;
+        transition: color 140ms ease;
+      }
+
+      .tab-button:hover {
+        color: #404b56;
+      }
+
+      .tab-button[aria-selected="true"] {
+        color: var(--maroon);
+        font-weight: 650;
+      }
+
+      .tab-button[aria-selected="true"]::after {
+        position: absolute;
+        right: 0;
+        bottom: -1px;
+        left: 0;
+        height: 2px;
+        border-radius: 2px 2px 0 0;
+        background: var(--maroon);
+        content: "";
+      }
+
+      .tab-button svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .tab-panel {
+        min-height: 330px;
+        padding: 27px 27px 32px;
+      }
+
+      .tab-panel[hidden] {
+        display: none;
+      }
+
+      .panel-intro {
+        margin: 0 0 21px;
+        color: #86909b;
+        font-size: 10px;
+        line-height: 1.6;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 17px;
+        color: #36404b;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .section-title svg {
+        width: 17px;
+        height: 17px;
+        color: var(--maroon);
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 22px;
+        border-top: 1px solid #eef0f2;
+      }
+
+      .detail-item {
+        display: flex;
+        min-height: 79px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 7px;
+        padding: 13px 4px;
+        border-bottom: 1px solid #eef0f2;
+      }
+
+      .detail-label {
+        color: #89929d;
+        font-size: 10px;
+      }
+
+      .detail-value {
+        color: #35404b;
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .detail-value .status-pill {
+        vertical-align: middle;
+      }
+
+      .equipment-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      .equipment-table th {
+        height: 41px;
+        padding: 0 13px;
+        background: #fafbfc;
+        color: #89929d;
+        font-size: 9px;
+        font-weight: 630;
+      }
+
+      .equipment-table td {
+        height: 51px;
+        padding: 0 13px;
+        border-top: 1px solid #eff0f2;
+        color: #515c68;
+        font-size: 10px;
+      }
+
+      .equipment-table td:first-child {
+        color: #37414c;
+        font-weight: 610;
+      }
+
+      .equipment-table-wrap {
+        overflow: hidden;
+        border: 1px solid #e9ebef;
+        border-radius: 8px;
+      }
+
+      .empty-state {
+        display: grid;
+        min-height: 255px;
+        align-content: center;
+        justify-items: center;
+        gap: 9px;
+        color: #8a939e;
+        text-align: center;
+      }
+
+      .empty-icon {
+        display: grid;
+        width: 49px;
+        height: 49px;
+        place-items: center;
+        margin-bottom: 4px;
+        border: 1px solid #e9ebef;
+        border-radius: 14px;
+        background: #fafbfc;
+        color: #89929d;
+      }
+
+      .empty-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .empty-state strong {
+        color: #39434e;
+        font-size: 12px;
+        font-weight: 640;
+      }
+
+      .empty-state p {
+        max-width: 340px;
+        margin: 0;
+        color: #8b949e;
+        font-size: 10px;
+        line-height: 1.6;
+      }
+
+      .toast {
+        position: fixed;
+        z-index: 10;
+        right: 25px;
+        bottom: 23px;
+        display: flex;
+        max-width: 420px;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 13px 15px;
+        border: 1px solid #e4e6e9;
+        border-radius: 9px;
+        background: #fff;
+        box-shadow: 0 10px 30px rgb(31 40 49 / 14%);
+        color: #4b5662;
+        font-size: 10px;
+        line-height: 1.5;
+        animation: toast-in 180ms ease-out both;
+      }
+
+      .toast[hidden] {
+        display: none;
+      }
+
+      .toast svg {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        margin-top: 1px;
+        color: #bb8526;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 1120px) {
+        .sidebar {
+          width: 224px;
+        }
+
+        .main-area {
+          margin-left: 224px;
+        }
+
+        .main-content {
+          padding-inline: 27px;
+        }
+
+        .profile-heading {
+          align-items: flex-start;
+        }
+
+        .profile-actions {
+          padding-top: 12px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand-lockup" href="dashboard-vessel-list.html#dashboard" aria-label="VesselSync dashboard">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 16.2 6.1 8h11.8l2.1 8.2-2.6 3H6.6l-2.6-3Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" />
+              <path d="M8.2 8V5.8h7.6V8M12 5.8V3.5M7 12.2h10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+            </svg>
+          </span>
+          <span class="brand-name">Vessel<span>Sync</span></span>
+        </a>
+
+        <p class="nav-label">Workspace</p>
+        <nav class="primary-nav" aria-label="Workspace">
+          <a class="nav-item" href="dashboard-vessel-list.html#dashboard">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <rect x="2.8" y="2.8" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+              <rect x="11.2" y="2.8" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+              <rect x="2.8" y="11.2" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+              <rect x="11.2" y="11.2" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+            </svg>
+            Dashboard
+          </a>
+          <a class="nav-item is-active" href="dashboard-vessel-list.html#vessel-list" aria-current="page">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="m2.8 11.1 1.8-6.3h10.8l1.8 6.3-2.2 2.5H5l-2.2-2.5Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" />
+              <path d="M6.7 4.8V3h6.6v1.8M4.5 9.4h11" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+              <path d="M3.3 16.2c1.2-.8 2.3-.8 3.5 0s2.3.8 3.5 0 2.3-.8 3.5 0 2.3.8 3.5 0" stroke="currentColor" stroke-linecap="round" stroke-width="1.3" />
+            </svg>
+            Vessels
+          </a>
+          <button class="nav-item" type="button" data-coming-soon="Maintenance">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+            </svg>
+            Maintenance
+          </button>
+          <button class="nav-item" type="button" data-coming-soon="Repair History">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M3.1 5.2h13.8M3.1 9.9h13.8M3.1 14.6h8" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+              <circle cx="15" cy="14.6" r="2" stroke="currentColor" stroke-width="1.4" />
+            </svg>
+            Repair History
+          </button>
+          <button class="nav-item" type="button" data-coming-soon="Reports">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 16.5V10M8 16.5V6.5M12 16.5V9M16 16.5V3.5" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              <path d="M2.8 17.2h14.4" stroke="currentColor" stroke-linecap="round" stroke-width="1.3" />
+            </svg>
+            Reports
+          </button>
+          <button class="nav-item" type="button" data-coming-soon="Settings">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4" />
+              <path d="M10 2.8v1.1M10 16.1v1.1M17.2 10h-1.1M3.9 10H2.8M15.1 4.9l-.8.8M5.7 14.3l-.8.8M15.1 15.1l-.8-.8M5.7 5.7l-.8-.8" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+              <circle cx="10" cy="10" r="5.6" stroke="currentColor" stroke-width="1.4" />
+            </svg>
+            Settings
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="workspace-card">
+            <span class="workspace-label">Organization</span>
+            <span class="workspace-name">OBM Technic</span>
+            <span class="workspace-status">Workspace active</span>
+          </div>
+          <a class="logout-link" href="login-interface-staff-admin.html">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M8.1 4H4.4a1.4 1.4 0 0 0-1.4 1.4v9.2A1.4 1.4 0 0 0 4.4 16h3.7M12.2 6.2l3.8 3.8-3.8 3.8M7.1 10h8.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+            </svg>
+            Log Out
+          </a>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <div class="main-content">
+          <header class="topbar">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+              <a href="dashboard-vessel-list.html#dashboard">Dashboard</a>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
+              </svg>
+              <a href="dashboard-vessel-list.html#vessel-list">Vessels</a>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
+              </svg>
+              <strong id="breadcrumb-vessel">OBM Pioneer</strong>
+            </nav>
+
+            <div class="topbar-actions">
+              <span class="today-label" id="today-label"></span>
+              <button class="icon-button" type="button" aria-label="Notifications">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M15.8 7.9a5.8 5.8 0 0 0-11.6 0c0 6-2 6-2 7.3h15.6c0-1.3-2-1.3-2-7.3ZM8 17.1h4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+              </button>
+              <div class="user-menu" aria-label="Signed in as Aina Rahman, Administrator">
+                <span class="avatar" aria-hidden="true">AR</span>
+                <span class="user-details">
+                  <strong>Aina Rahman</strong>
+                  <span>Administrator</span>
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <section class="profile-heading" aria-labelledby="vessel-name">
+            <div class="profile-heading-copy">
+              <p class="page-eyebrow">Vessel profile</p>
+              <div class="profile-title-line">
+                <h1 id="vessel-name">OBM Pioneer</h1>
+                <span class="status-pill status-operational" id="header-status">Operational</span>
+              </div>
+              <p class="profile-registration">
+                <span>Registration Number</span>
+                <strong id="registration-number">OBM-2024-001</strong>
+              </p>
+            </div>
+            <div class="profile-actions">
+              <button class="button button-secondary" id="edit-vessel" type="button">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="m12.2 4.1 3.7 3.7M3.4 16.6l3.5-.8L16 6.7a1.6 1.6 0 0 0-2.3-2.3l-9.1 9.1-.8 3.1Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+                Edit Vessel
+              </button>
+              <a class="button button-primary" id="create-repair" href="repair-job.html">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+                </svg>
+                Create Repair Job
+              </a>
+            </div>
+          </section>
+
+          <section class="profile-card" aria-label="Vessel information">
+            <div class="tab-list" role="tablist" aria-label="Vessel information sections">
+              <button
+                class="tab-button"
+                id="details-tab"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="details-panel"
+                tabindex="0"
+                data-tab="details"
+              >
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="10" cy="6.1" r="2.6" stroke="currentColor" stroke-width="1.4" />
+                  <path d="M4.2 16c.6-2.7 2.5-4.1 5.8-4.1s5.2 1.4 5.8 4.1" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+                </svg>
+                Details
+              </button>
+              <button
+                class="tab-button"
+                id="equipment-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="equipment-panel"
+                tabindex="-1"
+                data-tab="equipment"
+              >
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+                Equipment
+              </button>
+              <button
+                class="tab-button"
+                id="repairs-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="repairs-panel"
+                tabindex="-1"
+                data-tab="repairs"
+              >
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M4 4.2h8.7a2.1 2.1 0 0 1 2.1 2.1v9.5H6.1A2.1 2.1 0 0 1 4 13.7V4.2Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
+                  <path d="M6.7 7h5.1M6.7 9.8h5.1M6.7 12.6h3.3M14.8 15.8l2.6 1.3v-4.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" />
+                </svg>
+                Repair History
+              </button>
+            </div>
+
+            <section
+              class="tab-panel"
+              id="details-panel"
+              role="tabpanel"
+              aria-labelledby="details-tab"
+              tabindex="0"
+            >
+              <h2 class="section-title">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="m2.8 11 1.7-5.8h11l1.7 5.8-2.2 2.5H5l-2.2-2.5Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
+                  <path d="M6.7 5.2V3.5h6.6v1.7M4.2 9.3h11.6" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" />
+                </svg>
+                Vessel particulars
+              </h2>
+              <p class="panel-intro">
+                Principal registration information for this vessel.
+              </p>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Vessel Type</span>
+                  <strong class="detail-value" id="vessel-type">Tug Boat</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Length</span>
+                  <strong class="detail-value" id="vessel-length">42.5 m</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Gross Tonnage</span>
+                  <strong class="detail-value" id="gross-tonnage">485 GT</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Operational Status</span>
+                  <strong class="detail-value">
+                    <span class="status-pill status-operational" id="detail-status">Operational</span>
+                  </strong>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="tab-panel"
+              id="equipment-panel"
+              role="tabpanel"
+              aria-labelledby="equipment-tab"
+              tabindex="0"
+              hidden
+            >
+              <h2 class="section-title">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+                Equipment register
+              </h2>
+              <p class="panel-intro">
+                Engines and equipment assigned to this vessel.
+              </p>
+              <div id="equipment-content"></div>
+            </section>
+
+            <section
+              class="tab-panel"
+              id="repairs-panel"
+              role="tabpanel"
+              aria-labelledby="repairs-tab"
+              tabindex="0"
+              hidden
+            >
+              <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path d="M4 4.2h8.7a2.1 2.1 0 0 1 2.1 2.1v9.5H6.1A2.1 2.1 0 0 1 4 13.7V4.2Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
+                    <path d="M6.7 7h5.1M6.7 9.8h5.1M6.7 12.6h3.3" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" />
+                  </svg>
+                </span>
+                <strong>No repair records found for this vessel.</strong>
+                <p>Repair jobs and service history for this vessel will appear here.</p>
+              </div>
+            </section>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="profile-toast" role="status" aria-live="polite" hidden>
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4" />
+        <path d="M10 6v4.2M10 13.1h.01" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
+      </svg>
+      <span id="toast-message"></span>
+    </div>
+
+    <script>
+      const sampleVessel = {
+        name: "OBM Pioneer",
+        registration: "OBM-2024-001",
+        imo: "1234567",
+        type: "Tug Boat",
+        length: "42.5",
+        grossTonnage: "485",
+        status: "Operational",
+        engineDetails: "Caterpillar C18 marine diesel engine",
+        serialNumber: "CAT-C18-OBM-24001",
+        pumps: "2 × bilge pumps · 1 × fire pump",
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const hasSelectedVessel = params.has("registration");
+      const vessel = Object.fromEntries(
+        Object.keys(sampleVessel).map((key) => [
+          key,
+          params.get(key) || (hasSelectedVessel && key !== "status"
+            ? ""
+            : sampleVessel[key]),
+        ]),
+      );
+      const repairJobUrl = new URL("repair-job.html", window.location.href);
+      Object.entries(vessel).forEach(([key, value]) => {
+        repairJobUrl.searchParams.set(key, value);
+      });
+      document.querySelector("#create-repair").href = repairJobUrl.href;
+      const profileToast = document.querySelector("#profile-toast");
+      const toastMessage = document.querySelector("#toast-message");
+      let toastTimeout;
+
+      function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[character]);
+      }
+
+      function showToast(message) {
+        window.clearTimeout(toastTimeout);
+        toastMessage.textContent = message;
+        profileToast.hidden = false;
+        toastTimeout = window.setTimeout(() => {
+          profileToast.hidden = true;
+        }, 3300);
+      }
+
+      document.querySelector("#today-label").textContent = new Intl.DateTimeFormat(
+        "en",
+        { weekday: "short", day: "numeric", month: "short", year: "numeric" },
+      ).format(new Date());
+
+      document.querySelector("#vessel-name").textContent = vessel.name;
+      document.querySelector("#breadcrumb-vessel").textContent = vessel.name;
+      document.querySelector("#registration-number").textContent = vessel.registration;
+      document.querySelector("#vessel-type").textContent = vessel.type;
+      document.querySelector("#vessel-length").textContent = vessel.length
+        ? `${vessel.length} m`
+        : "—";
+      document.querySelector("#gross-tonnage").textContent = vessel.grossTonnage
+        ? `${vessel.grossTonnage} GT`
+        : "—";
+
+      const statusClass = vessel.status === "Operational"
+        ? "status-operational"
+        : "status-maintenance";
+      ["#header-status", "#detail-status"].forEach((selector) => {
+        const status = document.querySelector(selector);
+        status.textContent = vessel.status;
+        status.classList.remove("status-operational", "status-maintenance");
+        status.classList.add(statusClass);
+      });
+
+      const equipmentRows = [
+        ["Engine Details", vessel.engineDetails],
+        ["Serial Number", vessel.serialNumber],
+        ["Pumps", vessel.pumps],
+      ].filter(([, value]) => value);
+
+      if (equipmentRows.length > 0) {
+        document.querySelector("#equipment-content").innerHTML = `
+          <div class="equipment-table-wrap">
+            <table class="equipment-table">
+              <thead>
+                <tr><th scope="col">Equipment</th><th scope="col">Details</th></tr>
+              </thead>
+              <tbody>
+                ${equipmentRows.map(([label, value]) => `
+                  <tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      } else {
+        document.querySelector("#equipment-content").innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none">
+                <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+              </svg>
+            </span>
+            <strong>No equipment details available.</strong>
+            <p>Equipment information can be added to this vessel record.</p>
+          </div>`;
+      }
+
+      const tabs = [...document.querySelectorAll('[role="tab"]')];
+
+      function activateTab(tab) {
+        tabs.forEach((candidate) => {
+          const isSelected = candidate === tab;
+          candidate.setAttribute("aria-selected", String(isSelected));
+          candidate.tabIndex = isSelected ? 0 : -1;
+          document.querySelector(`#${candidate.getAttribute("aria-controls")}`).hidden =
+            !isSelected;
+        });
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => activateTab(tab));
+        tab.addEventListener("keydown", (event) => {
+          let nextIndex;
+          if (event.key === "ArrowRight") {
+            nextIndex = (index + 1) % tabs.length;
+          } else if (event.key === "ArrowLeft") {
+            nextIndex = (index - 1 + tabs.length) % tabs.length;
+          } else if (event.key === "Home") {
+            nextIndex = 0;
+          } else if (event.key === "End") {
+            nextIndex = tabs.length - 1;
+          } else {
+            return;
+          }
+
+          event.preventDefault();
+          tabs[nextIndex].focus();
+          activateTab(tabs[nextIndex]);
+        });
+      });
+
+      document.querySelector("#edit-vessel").addEventListener("click", () => {
+        showToast("Vessel editing is not connected in this interface prototype.");
+      });
+
+      document.querySelectorAll("[data-coming-soon]").forEach((button) => {
+        button.addEventListener("click", () => {
+          showToast(`${button.dataset.comingSoon} is coming soon.`);
+        });
+      });
+    </script>
+  </body>
+</html>
