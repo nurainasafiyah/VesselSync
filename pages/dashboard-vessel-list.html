@@ -1347,7 +1347,7 @@
             <article class="metric-card">
               <div>
                 <span class="metric-label">Total Vessels</span>
-                <strong class="metric-value" id="total-vessels">12</strong>
+                <strong class="metric-value" id="total-vessels">—</strong>
                 <span class="metric-caption">Registered in your fleet</span>
               </div>
               <span class="metric-icon maroon" aria-hidden="true">
@@ -1446,7 +1446,7 @@
           <section class="vessels-section" id="vessel-list" aria-labelledby="vessels-heading">
             <div class="section-heading">
               <div>
-                <h2 id="vessels-heading">Vessel Directory <span class="vessel-count" id="vessel-count">8</span></h2>
+                <h2 id="vessels-heading">Vessel Directory <span class="vessel-count" id="vessel-count">—</span></h2>
                 <p>View and manage your registered vessels</p>
               </div>
             </div>
@@ -1455,7 +1455,7 @@
               <div class="table-toolbar">
                 <div class="table-toolbar-copy">
                   <strong>Registered Vessels</strong>
-                  <span>Find a vessel using its registration number</span>
+                  <span>Find a vessel by name or registration number</span>
                 </div>
                 <div class="search-wrap">
                   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -1467,11 +1467,11 @@
                     id="registration-search"
                     type="search"
                     autocomplete="off"
-                    placeholder="Search by Registration Number..."
-                    aria-label="Search vessels by registration number"
+                    placeholder="Search by vessel name or registration number..."
+                    aria-label="Search vessels by vessel name or registration number"
                     aria-controls="vessel-table-body"
                   />
-                  <button class="clear-search" id="clear-search" type="button" aria-label="Clear registration number search" hidden>
+                  <button class="clear-search" id="clear-search" type="button" aria-label="Clear vessel search" hidden>
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                       <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
                     </svg>
@@ -1519,26 +1519,19 @@
       <span id="toast-message"></span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
-      const vessels = [
-        { name: "MV Ocean Crest", registration: "OBM-2020-001", type: "Container Ship", length: "295", grossTonnage: "52100", status: "Operational", updated: "Today, 9:42 AM" },
-        { name: "MV Eastern Star", registration: "OBM-2018-014", type: "Bulk Carrier", length: "188", grossTonnage: "28400", status: "Maintenance Due", updated: "Today, 8:16 AM" },
-        { name: "MV Blue Horizon", registration: "OBM-2021-006", type: "Tanker", length: "245", grossTonnage: "41200", status: "Operational", updated: "Yesterday" },
-        { name: "MV Pacific Dawn", registration: "OBM-2019-022", type: "Container Ship", length: "294", grossTonnage: "51800", status: "Operational", updated: "12 Nov 2026" },
-        { name: "MV Southern Cross", registration: "OBM-2022-003", type: "Offshore Support Vessel", length: "58.2", grossTonnage: "2450", status: "Maintenance Due", updated: "11 Nov 2026" },
-        { name: "MV Meridian", registration: "OBM-2017-009", type: "General Cargo", length: "168", grossTonnage: "18900", status: "Operational", updated: "10 Nov 2026" },
-        { name: "MV Coral Bay", registration: "OBM-2023-012", type: "Tanker", length: "235", grossTonnage: "39600", status: "Operational", updated: "8 Nov 2026" },
-        { name: "MV Northern Light", registration: "OBM-2016-018", type: "Bulk Carrier", length: "190", grossTonnage: "29100", status: "Maintenance Due", updated: "7 Nov 2026" },
-      ];
-
+      let vessels = [];
       const vesselTableBody = document.querySelector("#vessel-table-body");
       const registrationSearch = document.querySelector("#registration-search");
       const clearSearch = document.querySelector("#clear-search");
       const resultsSummary = document.querySelector("#results-summary");
       const vesselCount = document.querySelector("#vessel-count");
+      const totalVessels = document.querySelector("#total-vessels");
       const toast = document.querySelector("#toast");
       const toastMessage = document.querySelector("#toast-message");
-      let totalRegisteredVessels = 12;
+      let totalRegisteredVessels = 0;
       let toastTimeout;
 
       document.querySelector("#today-label").textContent = new Intl.DateTimeFormat(
@@ -1547,7 +1540,7 @@
       ).format(new Date());
 
       function escapeHtml(value) {
-        return value.replace(/[&<>"']/g, (character) => ({
+        return String(value ?? "").replace(/[&<>"']/g, (character) => ({
           "&": "&amp;",
           "<": "&lt;",
           ">": "&gt;",
@@ -1559,6 +1552,7 @@
       function renderVessels() {
         const query = registrationSearch.value.trim().toLocaleLowerCase();
         const filteredVessels = vessels.filter((vessel) =>
+          vessel.name.toLocaleLowerCase().includes(query) ||
           vessel.registration.toLocaleLowerCase().includes(query),
         );
 
@@ -1575,7 +1569,7 @@
                     <path d="m13 13 4 4" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
                   </svg>
                   <strong>No vessels found</strong>
-                  <span>Try a different registration number or register a new vessel.</span>
+                  <span>Try a different search or register a new vessel.</span>
                 </div>
               </td>
             </tr>`;
@@ -1615,8 +1609,71 @@
         resultsSummary.innerHTML = query
           ? `Showing <strong>${filteredVessels.length}</strong> matching ${noun}`
           : `Showing <strong>${filteredVessels.length}</strong> of ${totalRegisteredVessels} ${totalNoun}`;
-
       }
+
+        function renderLoadingState() {
+          vesselTableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="6">
+                <div class="empty-state">
+                  <strong>Loading vessels...</strong>
+                  <span>Retrieving registered vessels from the directory.</span>
+                </div>
+              </td>
+            </tr>`;
+          resultsSummary.textContent = "Loading registered vessels...";
+        }
+
+        function renderErrorState() {
+          vesselTableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="6">
+                <div class="empty-state">
+                  <strong>Vessels could not be loaded</strong>
+                  <span>Please refresh the page and try again.</span>
+                </div>
+              </td>
+            </tr>`;
+          resultsSummary.textContent = "The vessel directory is unavailable.";
+        }
+
+        async function loadVessels() {
+          renderLoadingState();
+
+          const { data, count, error } = await supabaseClient
+            .from("vessels")
+            .select("id, vessel_name, registration_number, vessel_type, created_at", {
+              count: "exact",
+            })
+            .order("vessel_name");
+
+          if (error) {
+            console.error("Unable to load vessels for the directory.", error);
+            vesselCount.textContent = "—";
+            totalVessels.textContent = "—";
+            renderErrorState();
+            showToast("The vessel directory could not be loaded.");
+            return;
+          }
+
+          vessels = data.map((vessel) => ({
+            id: vessel.id,
+            name: vessel.vessel_name || "",
+            registration: vessel.registration_number || "",
+            type: vessel.vessel_type || "—",
+            status: "Operational",
+            updated: vessel.created_at
+              ? new Intl.DateTimeFormat("en", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }).format(new Date(vessel.created_at))
+              : "—",
+          }));
+          totalRegisteredVessels = count ?? vessels.length;
+          totalVessels.textContent = String(totalRegisteredVessels);
+          renderVessels();
+        }
 
       function showToast(message) {
         window.clearTimeout(toastTimeout);
@@ -1678,7 +1735,7 @@
         });
       });
 
-      renderVessels();
+      loadVessels();
     </script>
     <style>
       .visually-hidden {
