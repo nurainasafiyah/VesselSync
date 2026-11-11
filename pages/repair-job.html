@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Record a vessel repair job in the VesselSync repair history."
+    />
+    <meta name="theme-color" content="#f5f7fa" />
+    <title>Create Repair Job | VesselSync</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #202630;
+        background: #f5f7fa;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        --maroon: #800000;
+        --maroon-dark: #680b18;
+        --canvas: #f5f7fa;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 1024px;
+        min-height: 100vh;
+        margin: 0;
+        background: var(--canvas);
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      a:focus-visible {
+        outline: 3px solid rgb(128 0 0 / 22%);
+        outline-offset: 3px;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        z-index: 5;
+        inset: 0 auto 0 0;
+        display: flex;
+        width: 252px;
+        flex-direction: column;
+        border-right: 1px solid #e9ebef;
+        background: #fff;
+      }
+
+      .brand-lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        padding: 27px 25px 31px;
+        color: #202630;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid #eadcdd;
+        border-radius: 11px;
+        background: #fbf6f6;
+        color: var(--maroon);
+      }
+
+      .brand-mark svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .brand-name {
+        font-size: 17px;
+        font-weight: 720;
+        letter-spacing: -0.045em;
+      }
+
+      .brand-name span {
+        font-weight: 460;
+      }
+
+      .nav-label {
+        margin: 0;
+        padding: 0 25px 11px;
+        color: #9aa2ad;
+        font-size: 9px;
+        font-weight: 690;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .primary-nav {
+        display: grid;
+        gap: 5px;
+        padding: 0 13px;
+      }
+
+      .nav-item {
+        display: flex;
+        width: 100%;
+        min-height: 43px;
+        align-items: center;
+        gap: 12px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #65707c;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 540;
+        text-align: left;
+        text-decoration: none;
+        transition:
+          background 140ms ease,
+          color 140ms ease;
+      }
+
+      .nav-item:hover {
+        background: #f7f5f5;
+        color: #303943;
+      }
+
+      .nav-item.is-active {
+        background: #f8eeee;
+        color: var(--maroon);
+        font-weight: 650;
+      }
+
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .sidebar-bottom {
+        display: grid;
+        gap: 16px;
+        margin-top: auto;
+        padding: 17px 13px 18px;
+      }
+
+      .workspace-card {
+        display: grid;
+        gap: 5px;
+        padding: 14px;
+        border: 1px solid #eee9e9;
+        border-radius: 9px;
+        background: #fcfafa;
+      }
+
+      .workspace-label {
+        color: #969ea7;
+        font-size: 9px;
+        font-weight: 650;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .workspace-name {
+        color: #414b56;
+        font-size: 11px;
+        font-weight: 620;
+      }
+
+      .workspace-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #858e98;
+        font-size: 10px;
+      }
+
+      .workspace-status::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4a9d77;
+        content: "";
+      }
+
+      .logout-link {
+        display: flex;
+        min-height: 41px;
+        align-items: center;
+        gap: 11px;
+        padding: 0 12px;
+        border-radius: 7px;
+        color: #66717d;
+        font-size: 12px;
+        text-decoration: none;
+      }
+
+      .logout-link:hover {
+        background: #f8eeee;
+        color: var(--maroon);
+      }
+
+      .logout-link svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .main-area {
+        min-height: 100vh;
+        margin-left: 252px;
+      }
+
+      .main-content {
+        width: min(100%, 1500px);
+        margin: 0 auto;
+        padding: 35px clamp(28px, 4vw, 58px) 50px;
+      }
+
+      .topbar {
+        display: flex;
+        min-height: 49px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #98a0a9;
+        font-size: 11px;
+      }
+
+      .breadcrumb a {
+        color: #858e99;
+        text-decoration: none;
+      }
+
+      .breadcrumb a:hover {
+        color: var(--maroon);
+      }
+
+      .breadcrumb svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .breadcrumb strong {
+        color: #59636f;
+        font-weight: 570;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .today-label {
+        color: #89929d;
+        font-size: 11px;
+      }
+
+      .notification-button {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid #e8eaee;
+        border-radius: 9px;
+        background: #fff;
+        color: #626d79;
+        cursor: pointer;
+      }
+
+      .notification-button:hover {
+        border-color: #e1cbcd;
+        color: var(--maroon);
+      }
+
+      .notification-button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .user-menu {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding-left: 13px;
+        border-left: 1px solid #e7e9ed;
+      }
+
+      .avatar {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 50%;
+        background: #f0e2e3;
+        color: var(--maroon);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .user-details {
+        display: grid;
+        gap: 3px;
+      }
+
+      .user-details strong {
+        color: #39434e;
+        font-size: 11px;
+        font-weight: 630;
+      }
+
+      .user-details span {
+        color: #959da7;
+        font-size: 9px;
+      }
+
+      .page-heading {
+        margin: 33px 0 23px;
+      }
+
+      .page-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        color: var(--maroon);
+        font-size: 9px;
+        font-weight: 690;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .page-eyebrow::before {
+        width: 17px;
+        height: 1px;
+        background: #bd8589;
+        content: "";
+      }
+
+      .page-heading h1 {
+        margin: 0;
+        color: #232b35;
+        font-size: 27px;
+        font-weight: 640;
+        letter-spacing: -0.055em;
+      }
+
+      .page-heading > p:last-child {
+        margin: 8px 0 0;
+        color: #7d8792;
+        font-size: 12px;
+        line-height: 1.65;
+      }
+
+      .form-card {
+        width: min(100%, 850px);
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid #e8eaee;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgb(39 46 56 / 3%);
+      }
+
+      .form-card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 22px 27px;
+        border-bottom: 1px solid #eceef1;
+      }
+
+      .form-card-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid #eedfe0;
+        border-radius: 11px;
+        background: #fbf5f5;
+        color: var(--maroon);
+      }
+
+      .form-card-icon svg {
+        width: 21px;
+        height: 21px;
+      }
+
+      .form-card-header h2 {
+        margin: 1px 0 0;
+        color: #2c3540;
+        font-size: 14px;
+        font-weight: 660;
+        letter-spacing: -0.025em;
+      }
+
+      .form-card-header p {
+        margin: 6px 0 0;
+        color: #89929c;
+        font-size: 10px;
+        line-height: 1.6;
+      }
+
+      .form-card-header p strong {
+        color: #626d78;
+        font-weight: 630;
+      }
+
+      .form-card-header p span {
+        color: #929ba5;
+      }
+
+      .link-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        color: #548166;
+        font-size: 9px;
+        font-weight: 570;
+      }
+
+      .link-indicator svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .repair-form {
+        padding: 25px 27px 0;
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 22px;
+        row-gap: 19px;
+      }
+
+      .field {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+      }
+
+      .field-full {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        color: #46505c;
+        font-size: 10px;
+        font-weight: 620;
+      }
+
+      .required-mark {
+        color: #b43838;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        min-height: 41px;
+        padding: 0 11px;
+        border: 1px solid #dfe3e8;
+        border-radius: 7px;
+        background: #fff;
+        color: #37414c;
+        font-size: 11px;
+        transition:
+          border-color 140ms ease,
+          box-shadow 140ms ease;
+      }
+
+      .field input::placeholder,
+      .field textarea::placeholder {
+        color: #a2aab3;
+      }
+
+      .field select:invalid {
+        color: #a2aab3;
+      }
+
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: #a66a70;
+        outline: none;
+        box-shadow: 0 0 0 3px rgb(128 0 0 / 8%);
+      }
+
+      .field input[readonly] {
+        border-color: #e6e8ec;
+        background: #f8f9fa;
+        color: #58636f;
+        font-variant-numeric: tabular-nums;
+        font-weight: 620;
+        letter-spacing: 0.035em;
+        cursor: default;
+      }
+
+      .field textarea {
+        min-height: 116px;
+        padding: 11px 12px;
+        resize: vertical;
+        line-height: 1.6;
+      }
+
+      .field input[aria-invalid="true"],
+      .field select[aria-invalid="true"],
+      .field textarea[aria-invalid="true"] {
+        border-color: #d66b6b;
+        background-color: #fffafa;
+      }
+
+      .field input[aria-invalid="true"]:focus,
+      .field select[aria-invalid="true"]:focus,
+      .field textarea[aria-invalid="true"]:focus {
+        box-shadow: 0 0 0 3px rgb(175 50 50 / 10%);
+      }
+
+      .field-hint {
+        color: #939ca6;
+        font-size: 9px;
+        line-height: 1.5;
+      }
+
+      .field-error {
+        min-height: 13px;
+        color: #b43a3a;
+        font-size: 9px;
+        line-height: 1.4;
+      }
+
+      .field-error:empty {
+        display: none;
+      }
+
+      .form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 24px -27px 0;
+        padding: 17px 27px;
+        border-top: 1px solid #eceef1;
+        background: #fdfdfd;
+      }
+
+      .form-actions-note {
+        color: #929ba5;
+        font-size: 9px;
+      }
+
+      .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-width: 92px;
+        min-height: 37px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 15px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 620;
+        text-decoration: none;
+        transition:
+          background 140ms ease,
+          border-color 140ms ease,
+          box-shadow 140ms ease,
+          transform 140ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .button-secondary {
+        border-color: #dfe3e8;
+        background: #fff;
+        color: #66717d;
+      }
+
+      .button-secondary:hover {
+        border-color: #cdd2d8;
+        background: #f8f9fa;
+      }
+
+      .button-primary {
+        min-width: 123px;
+        border-color: var(--maroon);
+        background: var(--maroon);
+        box-shadow: 0 4px 10px rgb(128 0 0 / 12%);
+        color: #fff;
+      }
+
+      .button-primary:hover {
+        border-color: var(--maroon-dark);
+        background: var(--maroon-dark);
+        box-shadow: 0 5px 13px rgb(128 0 0 / 18%);
+      }
+
+      .button-primary svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .toast {
+        position: fixed;
+        z-index: 10;
+        top: 22px;
+        right: 25px;
+        display: flex;
+        width: min(460px, calc(100vw - 50px));
+        align-items: flex-start;
+        gap: 11px;
+        padding: 14px 17px;
+        border: 1px solid #d6ebde;
+        border-radius: 9px;
+        background: #f3fbf5;
+        box-shadow: 0 9px 26px rgb(33 60 43 / 12%);
+        color: #32734e;
+        font-size: 11px;
+        font-weight: 570;
+        line-height: 1.55;
+        animation: toast-in 180ms ease-out both;
+      }
+
+      .toast[hidden] {
+        display: none;
+      }
+
+      .toast svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 1120px) {
+        .sidebar {
+          width: 224px;
+        }
+
+        .main-area {
+          margin-left: 224px;
+        }
+
+        .main-content {
+          padding-inline: 27px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand-lockup" href="dashboard-vessel-list.html#dashboard" aria-label="VesselSync dashboard">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 16.2 6.1 8h11.8l2.1 8.2-2.6 3H6.6l-2.6-3Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" />
+              <path d="M8.2 8V5.8h7.6V8M12 5.8V3.5M7 12.2h10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+            </svg>
+          </span>
+          <span class="brand-name">Vessel<span>Sync</span></span>
+        </a>
+
+        <p class="nav-label">Workspace</p>
+        <nav class="primary-nav" aria-label="Workspace">
+          <a class="nav-item" href="dashboard-vessel-list.html#dashboard">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <rect x="2.8" y="2.8" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+              <rect x="11.2" y="2.8" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+              <rect x="2.8" y="11.2" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+              <rect x="11.2" y="11.2" width="6" height="6" rx="1.3" stroke="currentColor" stroke-width="1.4" />
+            </svg>
+            Dashboard
+          </a>
+          <a class="nav-item is-active" href="dashboard-vessel-list.html#vessel-list" aria-current="page">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="m2.8 11.1 1.8-6.3h10.8l1.8 6.3-2.2 2.5H5l-2.2-2.5Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" />
+              <path d="M6.7 4.8V3h6.6v1.8M4.5 9.4h11" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+              <path d="M3.3 16.2c1.2-.8 2.3-.8 3.5 0s2.3.8 3.5 0 2.3-.8 3.5 0 2.3.8 3.5 0" stroke="currentColor" stroke-linecap="round" stroke-width="1.3" />
+            </svg>
+            Vessels
+          </a>
+          <button class="nav-item" type="button" data-coming-soon="Maintenance">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+            </svg>
+            Maintenance
+          </button>
+          <button class="nav-item" type="button" data-coming-soon="Repair History">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M3.1 5.2h13.8M3.1 9.9h13.8M3.1 14.6h8" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+              <circle cx="15" cy="14.6" r="2" stroke="currentColor" stroke-width="1.4" />
+            </svg>
+            Repair History
+          </button>
+          <button class="nav-item" type="button" data-coming-soon="Reports">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 16.5V10M8 16.5V6.5M12 16.5V9M16 16.5V3.5" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              <path d="M2.8 17.2h14.4" stroke="currentColor" stroke-linecap="round" stroke-width="1.3" />
+            </svg>
+            Reports
+          </button>
+          <button class="nav-item" type="button" data-coming-soon="Settings">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4" />
+              <path d="M10 2.8v1.1M10 16.1v1.1M17.2 10h-1.1M3.9 10H2.8M15.1 4.9l-.8.8M5.7 14.3l-.8.8M15.1 15.1l-.8-.8M5.7 5.7l-.8-.8" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" />
+              <circle cx="10" cy="10" r="5.6" stroke="currentColor" stroke-width="1.4" />
+            </svg>
+            Settings
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="workspace-card">
+            <span class="workspace-label">Organization</span>
+            <span class="workspace-name">OBM Technic</span>
+            <span class="workspace-status">Workspace active</span>
+          </div>
+          <a class="logout-link" href="login-interface-staff-admin.html">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M8.1 4H4.4a1.4 1.4 0 0 0-1.4 1.4v9.2A1.4 1.4 0 0 0 4.4 16h3.7M12.2 6.2l3.8 3.8-3.8 3.8M7.1 10h8.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+            </svg>
+            Log Out
+          </a>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <div class="main-content">
+          <header class="topbar">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+              <a href="dashboard-vessel-list.html#dashboard">Dashboard</a>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
+              </svg>
+              <a id="vessels-breadcrumb" href="dashboard-vessel-list.html#vessel-list">Vessels</a>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
+              </svg>
+              <strong>Create Repair Job</strong>
+            </nav>
+
+            <div class="topbar-actions">
+              <span class="today-label" id="today-label"></span>
+              <button class="notification-button" type="button" aria-label="Notifications">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M15.8 7.9a5.8 5.8 0 0 0-11.6 0c0 6-2 6-2 7.3h15.6c0-1.3-2-1.3-2-7.3ZM8 17.1h4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+              </button>
+              <div class="user-menu" aria-label="Signed in as Aina Rahman, Administrator">
+                <span class="avatar" aria-hidden="true">AR</span>
+                <span class="user-details">
+                  <strong>Aina Rahman</strong>
+                  <span>Administrator</span>
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <section class="page-heading" aria-labelledby="page-title">
+            <p class="page-eyebrow">Repair records</p>
+            <h1 id="page-title">Create Repair Job</h1>
+            <p>Record a repair job and link it to a vessel in your fleet.</p>
+          </section>
+
+          <section class="form-card" aria-labelledby="form-card-title">
+            <header class="form-card-header">
+              <span class="form-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+              </span>
+              <div>
+                <h2 id="form-card-title">Repair job information</h2>
+                <p id="linked-vessel">
+                  Linked to vessel:
+                  <strong>OBM Pioneer</strong>
+                  <span>(IMO: 1234567)</span>
+                </p>
+                <span class="link-indicator" id="link-indicator">
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.2" />
+                    <path d="m4.8 8.1 2.1 2.1 4.3-4.4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
+                  </svg>
+                  Vessel linked to this repair record
+                </span>
+              </div>
+            </header>
+
+            <form class="repair-form" id="repair-form" novalidate>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="reference-number">Unique Reference Number</label>
+                  <input id="reference-number" name="referenceNumber" type="text" readonly aria-describedby="reference-hint" />
+                  <span class="field-hint" id="reference-hint">Automatically assigned to this repair record.</span>
+                </div>
+
+                <div class="field">
+                  <label for="job-status">Job Status <span class="required-mark">*</span></label>
+                  <select id="job-status" name="status" required aria-describedby="status-error">
+                    <option value="" selected disabled>Select job status</option>
+                    <option>Pending</option>
+                    <option>In Progress</option>
+                    <option>Completed</option>
+                  </select>
+                  <span class="field-error" id="status-error"></span>
+                </div>
+
+                <div class="field field-full">
+                  <label for="repair-description">Repair Description <span class="required-mark">*</span></label>
+                  <textarea
+                    id="repair-description"
+                    name="description"
+                    placeholder="Describe the repair work required or completed..."
+                    required
+                    aria-describedby="description-error"
+                  ></textarea>
+                  <span class="field-error" id="description-error"></span>
+                </div>
+
+                <div class="field">
+                  <label for="repair-date">Repair Date <span class="required-mark">*</span></label>
+                  <input id="repair-date" name="date" type="date" required aria-describedby="date-error" />
+                  <span class="field-error" id="date-error"></span>
+                </div>
+              </div>
+
+              <footer class="form-actions">
+                <span class="form-actions-note"><span class="required-mark">*</span> Required information must be completed.</span>
+                <div class="action-buttons">
+                  <a class="button button-secondary" id="cancel-link" href="vessel-profile.html">Cancel</a>
+                  <button class="button button-primary" type="submit">
+                    Save Record
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="m4.5 10 3.5 3.5 7.5-7.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+                    </svg>
+                  </button>
+                </div>
+              </footer>
+            </form>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="success-toast" role="status" aria-live="polite" hidden>
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4" />
+        <path d="m6.8 10.2 2.1 2.1 4.4-4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+      </svg>
+      <span>Repair record updated successfully. Available for repair planning and cost estimation.</span>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const hasLinkedVessel = params.has("registration");
+      const vessel = {
+        name: params.get("name") || "OBM Pioneer",
+        registration: params.get("registration") || "OBM-2024-001",
+        imo: params.has("imo") ? params.get("imo") : "1234567",
+      };
+      const repairForm = document.querySelector("#repair-form");
+      const successToast = document.querySelector("#success-toast");
+      const year = new Date().getFullYear();
+      const sequenceKey = `vesselsync.repair-sequence.${year}`;
+      const nextSequence = Number(localStorage.getItem(sequenceKey) || "1");
+
+      if (!Number.isSafeInteger(nextSequence) || nextSequence < 1) {
+        throw new Error("Unable to generate a valid repair reference number.");
+      }
+
+      localStorage.setItem(sequenceKey, String(nextSequence + 1));
+      document.querySelector("#reference-number").value =
+        `RJ-${year}-${String(nextSequence).padStart(3, "0")}`;
+
+      document.querySelector("#today-label").textContent = new Intl.DateTimeFormat(
+        "en",
+        { weekday: "short", day: "numeric", month: "short", year: "numeric" },
+      ).format(new Date());
+
+      const linkedVessel = document.querySelector("#linked-vessel");
+      linkedVessel.innerHTML = `
+        Linked to vessel:
+        <strong>${escapeHtml(vessel.name)}</strong>
+        <span>${vessel.imo ? `(IMO: ${escapeHtml(vessel.imo)})` : "(IMO not provided)"}</span>`;
+
+      if (hasLinkedVessel) {
+        const vesselProfileUrl = new URL("vessel-profile.html", window.location.href);
+        params.forEach((value, key) => vesselProfileUrl.searchParams.set(key, value));
+        document.querySelector("#cancel-link").href = vesselProfileUrl.href;
+      }
+
+      function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[character]);
+      }
+
+      const requiredFields = [
+        {
+          input: document.querySelector("#repair-description"),
+          error: document.querySelector("#description-error"),
+          message: "Repair description is required",
+          isValid: (input) => input.value.trim().length > 0,
+        },
+        {
+          input: document.querySelector("#repair-date"),
+          error: document.querySelector("#date-error"),
+          message: "Repair date is required",
+          isValid: (input) => input.value.length > 0 && input.validity.valid,
+        },
+        {
+          input: document.querySelector("#job-status"),
+          error: document.querySelector("#status-error"),
+          message: "Job status is required",
+          isValid: (input) => input.value.length > 0,
+        },
+      ];
+
+      function validateField(field) {
+        const valid = field.isValid(field.input);
+        field.input.setAttribute("aria-invalid", String(!valid));
+        field.error.textContent = valid ? "" : field.message;
+        return valid;
+      }
+
+      requiredFields.forEach((field) => {
+        field.input.addEventListener("input", () => {
+          if (repairForm.dataset.submitted === "true") {
+            validateField(field);
+          }
+        });
+        field.input.addEventListener("change", () => {
+          if (repairForm.dataset.submitted === "true") {
+            validateField(field);
+          }
+        });
+      });
+
+      repairForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        repairForm.dataset.submitted = "true";
+        const invalidFields = requiredFields.filter((field) => !validateField(field));
+
+        if (invalidFields.length > 0) {
+          successToast.hidden = true;
+          invalidFields[0].input.focus();
+          return;
+        }
+
+        successToast.hidden = false;
+        successToast.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+
+    </script>
+  </body>
+</html>
