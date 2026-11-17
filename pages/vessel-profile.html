@@ -652,6 +652,42 @@
         border-radius: 8px;
       }
 
+      .repair-history-table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e9ebef;
+        border-radius: 8px;
+      }
+
+      .repair-history-table {
+        width: 100%;
+        min-width: 700px;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      .repair-history-table th {
+        height: 41px;
+        padding: 0 13px;
+        background: #fafbfc;
+        color: #89929d;
+        font-size: 9px;
+        font-weight: 630;
+      }
+
+      .repair-history-table td {
+        padding: 13px;
+        border-top: 1px solid #eff0f2;
+        color: #515c68;
+        font-size: 10px;
+        line-height: 1.5;
+        vertical-align: top;
+      }
+
+      .repair-history-table td:first-child {
+        color: #37414c;
+        font-weight: 610;
+      }
+
       .empty-state {
         display: grid;
         min-height: 255px;
@@ -1026,15 +1062,16 @@
               tabindex="0"
               hidden
             >
-              <div class="empty-state">
+              <div id="repair-history-content">
+                <div class="empty-state">
                 <span class="empty-icon" aria-hidden="true">
                   <svg viewBox="0 0 20 20" fill="none">
                     <path d="M4 4.2h8.7a2.1 2.1 0 0 1 2.1 2.1v9.5H6.1A2.1 2.1 0 0 1 4 13.7V4.2Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
                     <path d="M6.7 7h5.1M6.7 9.8h5.1M6.7 12.6h3.3" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" />
                   </svg>
                 </span>
-                <strong>No repair records found for this vessel.</strong>
-                <p>Repair jobs and service history for this vessel will appear here.</p>
+                  <strong>Loading repair history...</strong>
+                </div>
               </div>
             </section>
           </section>
@@ -1060,7 +1097,7 @@
       const notProvided = "Not provided";
 
       function escapeHtml(value) {
-        return value.replace(/[&<>"']/g, (character) => ({
+        return String(value).replace(/[&<>"']/g, (character) => ({
           "&": "&amp;",
           "<": "&lt;",
           ">": "&gt;",
@@ -1144,7 +1181,95 @@
         }
       }
 
+      function renderRepairHistoryState(title, message = "") {
+        document.querySelector("#repair-history-content").innerHTML = `
+          <div class="empty-state">
+              <span class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M4 4.2h8.7a2.1 2.1 0 0 1 2.1 2.1v9.5H6.1A2.1 2.1 0 0 1 4 13.7V4.2Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
+                  <path d="M6.7 7h5.1M6.7 9.8h5.1M6.7 12.6h3.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" />
+                </svg>
+              </span>
+            <strong>${escapeHtml(title)}</strong>
+            ${message ? `<p>${escapeHtml(message)}</p>` : ""}
+          </div>`;
+      }
+
+      function renderRepairHistory(repairs) {
+        if (repairs.length === 0) {
+          renderRepairHistoryState(
+            "No repair history available",
+            "Repair jobs and service history for this vessel will appear here.",
+          );
+          return;
+        }
+
+        document.querySelector("#repair-history-content").innerHTML = `
+          <div class="repair-history-table-wrap">
+            <table class="repair-history-table">
+              <thead>
+                <tr>
+                  <th scope="col">Repair Title</th>
+                  <th scope="col">Job Status</th>
+                  <th scope="col">Repair Description</th>
+                  <th scope="col">Repair Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${repairs.map((repair) => `
+                  <tr>
+                    <td>${escapeHtml(displayValue(repair.repair_title))}</td>
+                    <td>${escapeHtml(displayValue(repair.status))}</td>
+                    <td>${escapeHtml(displayValue(repair.repair_description))}</td>
+                    <td>${escapeHtml(displayValue(repair.repair_date))}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      let vesselLoadSequence = 0;
+
+      async function loadRepairHistory(vesselId, requestSequence) {
+        renderRepairHistoryState("Loading repair history...");
+
+        const { data: repairs, error } = await supabaseClient
+          .from("repairs")
+          .select("repair_title, status, repair_description, repair_date")
+          .eq("vessel_id", vesselId)
+          .order("repair_date", { ascending: false });
+
+        console.debug("Repair history query result.", {
+          vesselId,
+          requestSequence,
+          count: repairs ? repairs.length : 0,
+          error,
+        });
+
+        if (requestSequence !== vesselLoadSequence) {
+          console.debug("Ignoring outdated repair history query result.", {
+            vesselId,
+            requestSequence,
+            currentRequestSequence: vesselLoadSequence,
+          });
+          return;
+        }
+
+        if (error) {
+          console.error("Unable to load repair history.", error);
+          renderRepairHistoryState(
+            "Repair history could not be loaded.",
+            "Please try again later.",
+          );
+          return;
+        }
+
+        renderRepairHistory(repairs || []);
+      }
+
       async function loadVessel() {
+        const requestSequence = ++vesselLoadSequence;
         const vesselId = params.get("id");
         if (!vesselId) {
           showToast("No vessel was selected.");
@@ -1156,6 +1281,15 @@
           .select("id, vessel_name, registration_number, vessel_type, length_m, gross_tonnage, engine_details, serial_number, pumps")
           .eq("id", vesselId)
           .maybeSingle();
+
+        if (requestSequence !== vesselLoadSequence) {
+          console.debug("Ignoring outdated vessel query result.", {
+            vesselId,
+            requestSequence,
+            currentRequestSequence: vesselLoadSequence,
+          });
+          return;
+        }
 
         if (error) {
           console.error("Unable to load vessel profile.", error);
@@ -1169,9 +1303,8 @@
         }
 
         renderVessel(vessel);
+        await loadRepairHistory(vessel.id, requestSequence);
       }
-
-      loadVessel();
 
       const tabs = [...document.querySelectorAll('[role="tab"]')];
 
@@ -1218,7 +1351,17 @@
       });
 
       initializeLogoutButtons();
-      initializeProtectedPage();
+      initializeProtectedPage().then((authenticatedProfile) => {
+        if (!authenticatedProfile) {
+          return;
+        }
+
+        console.debug("Authenticated vessel profile user.", {
+          userId: authenticatedProfile.user.id,
+          role: authenticatedProfile.profile.role,
+        });
+        loadVessel();
+      });
     </script>
   </body>
 </html>
