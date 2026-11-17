@@ -1579,9 +1579,7 @@
               ? "status-operational"
               : "status-maintenance";
             const profileUrl = new URL("vessel-profile.html", window.location.href);
-            Object.entries(vessel).forEach(([key, value]) => {
-              profileUrl.searchParams.set(key, value);
-            });
+            profileUrl.searchParams.set("id", vessel.id);
             return `
               <tr>
                 <td>
