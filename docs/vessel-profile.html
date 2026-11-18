@@ -652,6 +652,42 @@
         border-radius: 8px;
       }
 
+      .repair-history-table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e9ebef;
+        border-radius: 8px;
+      }
+
+      .repair-history-table {
+        width: 100%;
+        min-width: 700px;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      .repair-history-table th {
+        height: 41px;
+        padding: 0 13px;
+        background: #fafbfc;
+        color: #89929d;
+        font-size: 9px;
+        font-weight: 630;
+      }
+
+      .repair-history-table td {
+        padding: 13px;
+        border-top: 1px solid #eff0f2;
+        color: #515c68;
+        font-size: 10px;
+        line-height: 1.5;
+        vertical-align: top;
+      }
+
+      .repair-history-table td:first-child {
+        color: #37414c;
+        font-weight: 610;
+      }
+
       .empty-state {
         display: grid;
         min-height: 255px;
@@ -839,7 +875,7 @@
             <span class="workspace-name">OBM Technic</span>
             <span class="workspace-status">Workspace active</span>
           </div>
-          <a class="logout-link" href="login-interface-staff-admin.html">
+          <a class="logout-link" href="index.html" data-logout>
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M8.1 4H4.4a1.4 1.4 0 0 0-1.4 1.4v9.2A1.4 1.4 0 0 0 4.4 16h3.7M12.2 6.2l3.8 3.8-3.8 3.8M7.1 10h8.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
             </svg>
@@ -860,7 +896,7 @@
               <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" />
               </svg>
-              <strong id="breadcrumb-vessel">OBM Pioneer</strong>
+              <strong id="breadcrumb-vessel">Not provided</strong>
             </nav>
 
             <div class="topbar-actions">
@@ -870,11 +906,11 @@
                   <path d="M15.8 7.9a5.8 5.8 0 0 0-11.6 0c0 6-2 6-2 7.3h15.6c0-1.3-2-1.3-2-7.3ZM8 17.1h4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
                 </svg>
               </button>
-              <div class="user-menu" aria-label="Signed in as Aina Rahman, Administrator">
-                <span class="avatar" aria-hidden="true">AR</span>
+              <div class="user-menu" data-auth-user-menu>
+                <span class="avatar" data-auth-initials aria-hidden="true"></span>
                 <span class="user-details">
-                  <strong>Aina Rahman</strong>
-                  <span>Administrator</span>
+                  <strong data-auth-full-name></strong>
+                  <span data-auth-role></span>
                 </span>
               </div>
             </div>
@@ -884,12 +920,12 @@
             <div class="profile-heading-copy">
               <p class="page-eyebrow">Vessel profile</p>
               <div class="profile-title-line">
-                <h1 id="vessel-name">OBM Pioneer</h1>
+                <h1 id="vessel-name">Not provided</h1>
                 <span class="status-pill status-operational" id="header-status">Operational</span>
               </div>
               <p class="profile-registration">
                 <span>Registration Number</span>
-                <strong id="registration-number">OBM-2024-001</strong>
+                <strong id="registration-number">Not provided</strong>
               </p>
             </div>
             <div class="profile-actions">
@@ -979,15 +1015,15 @@
               <div class="detail-grid">
                 <div class="detail-item">
                   <span class="detail-label">Vessel Type</span>
-                  <strong class="detail-value" id="vessel-type">Tug Boat</strong>
+                  <strong class="detail-value" id="vessel-type">Not provided</strong>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Length</span>
-                  <strong class="detail-value" id="vessel-length">42.5 m</strong>
+                  <strong class="detail-value" id="vessel-length">Not provided</strong>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Gross Tonnage</span>
-                  <strong class="detail-value" id="gross-tonnage">485 GT</strong>
+                  <strong class="detail-value" id="gross-tonnage">Not provided</strong>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Operational Status</span>
@@ -1026,15 +1062,16 @@
               tabindex="0"
               hidden
             >
-              <div class="empty-state">
+              <div id="repair-history-content">
+                <div class="empty-state">
                 <span class="empty-icon" aria-hidden="true">
                   <svg viewBox="0 0 20 20" fill="none">
                     <path d="M4 4.2h8.7a2.1 2.1 0 0 1 2.1 2.1v9.5H6.1A2.1 2.1 0 0 1 4 13.7V4.2Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
                     <path d="M6.7 7h5.1M6.7 9.8h5.1M6.7 12.6h3.3" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" />
                   </svg>
                 </span>
-                <strong>No repair records found for this vessel.</strong>
-                <p>Repair jobs and service history for this vessel will appear here.</p>
+                  <strong>Loading repair history...</strong>
+                </div>
               </div>
             </section>
           </section>
@@ -1050,41 +1087,17 @@
       <span id="toast-message"></span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
-      const sampleVessel = {
-        name: "OBM Pioneer",
-        registration: "OBM-2024-001",
-        imo: "1234567",
-        type: "Tug Boat",
-        length: "42.5",
-        grossTonnage: "485",
-        status: "Operational",
-        engineDetails: "Caterpillar C18 marine diesel engine",
-        serialNumber: "CAT-C18-OBM-24001",
-        pumps: "2 × bilge pumps · 1 × fire pump",
-      };
-
       const params = new URLSearchParams(window.location.search);
-      const hasSelectedVessel = params.has("registration");
-      const vessel = Object.fromEntries(
-        Object.keys(sampleVessel).map((key) => [
-          key,
-          params.get(key) || (hasSelectedVessel && key !== "status"
-            ? ""
-            : sampleVessel[key]),
-        ]),
-      );
-      const repairJobUrl = new URL("repair-job.html", window.location.href);
-      Object.entries(vessel).forEach(([key, value]) => {
-        repairJobUrl.searchParams.set(key, value);
-      });
-      document.querySelector("#create-repair").href = repairJobUrl.href;
       const profileToast = document.querySelector("#profile-toast");
       const toastMessage = document.querySelector("#toast-message");
       let toastTimeout;
+      const notProvided = "Not provided";
 
       function escapeHtml(value) {
-        return value.replace(/[&<>"']/g, (character) => ({
+        return String(value).replace(/[&<>"']/g, (character) => ({
           "&": "&amp;",
           "<": "&lt;",
           ">": "&gt;",
@@ -1107,58 +1120,190 @@
         { weekday: "short", day: "numeric", month: "short", year: "numeric" },
       ).format(new Date());
 
-      document.querySelector("#vessel-name").textContent = vessel.name;
-      document.querySelector("#breadcrumb-vessel").textContent = vessel.name;
-      document.querySelector("#registration-number").textContent = vessel.registration;
-      document.querySelector("#vessel-type").textContent = vessel.type;
-      document.querySelector("#vessel-length").textContent = vessel.length
-        ? `${vessel.length} m`
-        : "—";
-      document.querySelector("#gross-tonnage").textContent = vessel.grossTonnage
-        ? `${vessel.grossTonnage} GT`
-        : "—";
+      function displayValue(value) {
+        return value === null || value === undefined || value === ""
+          ? notProvided
+          : String(value);
+      }
 
-      const statusClass = vessel.status === "Operational"
-        ? "status-operational"
-        : "status-maintenance";
-      ["#header-status", "#detail-status"].forEach((selector) => {
-        const status = document.querySelector(selector);
-        status.textContent = vessel.status;
-        status.classList.remove("status-operational", "status-maintenance");
-        status.classList.add(statusClass);
-      });
+      function renderVessel(vessel) {
+        const name = displayValue(vessel.vessel_name);
+        document.querySelector("#vessel-name").textContent = name;
+        document.querySelector("#breadcrumb-vessel").textContent = name;
+        document.querySelector("#registration-number").textContent =
+          displayValue(vessel.registration_number);
+        document.querySelector("#vessel-type").textContent =
+          displayValue(vessel.vessel_type);
+        document.querySelector("#vessel-length").textContent =
+          vessel.length_m === null || vessel.length_m === undefined || vessel.length_m === ""
+            ? notProvided
+            : `${vessel.length_m} m`;
+        document.querySelector("#gross-tonnage").textContent =
+          vessel.gross_tonnage === null || vessel.gross_tonnage === undefined || vessel.gross_tonnage === ""
+            ? notProvided
+            : `${vessel.gross_tonnage} GT`;
 
-      const equipmentRows = [
-        ["Engine Details", vessel.engineDetails],
-        ["Serial Number", vessel.serialNumber],
-        ["Pumps", vessel.pumps],
-      ].filter(([, value]) => value);
+        const repairJobUrl = new URL("repair-job.html", window.location.href);
+        repairJobUrl.searchParams.set("id", vessel.id);
+        document.querySelector("#create-repair").href = repairJobUrl.href;
 
-      if (equipmentRows.length > 0) {
-        document.querySelector("#equipment-content").innerHTML = `
-          <div class="equipment-table-wrap">
-            <table class="equipment-table">
+        const equipmentRows = [
+          ["Engine Details", vessel.engine_details],
+          ["Serial Number", vessel.serial_number],
+          ["Pumps", vessel.pumps],
+        ].map(([label, value]) => [label, displayValue(value)]);
+
+        if (equipmentRows.length > 0) {
+          document.querySelector("#equipment-content").innerHTML = `
+            <div class="equipment-table-wrap">
+              <table class="equipment-table">
+                <thead>
+                  <tr><th scope="col">Equipment</th><th scope="col">Details</th></tr>
+                </thead>
+                <tbody>
+                  ${equipmentRows.map(([label, value]) => `
+                    <tr><td>${escapeHtml(label)}</td><td>${escapeHtml(String(value))}</td></tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>`;
+        } else {
+          document.querySelector("#equipment-content").innerHTML = `
+            <div class="empty-state">
+              <span class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
+                </svg>
+              </span>
+              <strong>No equipment details available.</strong>
+              <p>Equipment information can be added to this vessel record.</p>
+            </div>`;
+        }
+      }
+
+      function renderRepairHistoryState(title, message = "") {
+        document.querySelector("#repair-history-content").innerHTML = `
+          <div class="empty-state">
+              <span class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M4 4.2h8.7a2.1 2.1 0 0 1 2.1 2.1v9.5H6.1A2.1 2.1 0 0 1 4 13.7V4.2Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.35" />
+                  <path d="M6.7 7h5.1M6.7 9.8h5.1M6.7 12.6h3.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" />
+                </svg>
+              </span>
+            <strong>${escapeHtml(title)}</strong>
+            ${message ? `<p>${escapeHtml(message)}</p>` : ""}
+          </div>`;
+      }
+
+      function renderRepairHistory(repairs) {
+        if (repairs.length === 0) {
+          renderRepairHistoryState(
+            "No repair history available",
+            "Repair jobs and service history for this vessel will appear here.",
+          );
+          return;
+        }
+
+        document.querySelector("#repair-history-content").innerHTML = `
+          <div class="repair-history-table-wrap">
+            <table class="repair-history-table">
               <thead>
-                <tr><th scope="col">Equipment</th><th scope="col">Details</th></tr>
+                <tr>
+                  <th scope="col">Repair Title</th>
+                  <th scope="col">Job Status</th>
+                  <th scope="col">Repair Description</th>
+                  <th scope="col">Repair Date</th>
+                </tr>
               </thead>
               <tbody>
-                ${equipmentRows.map(([label, value]) => `
-                  <tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>
+                ${repairs.map((repair) => `
+                  <tr>
+                    <td>${escapeHtml(displayValue(repair.repair_title))}</td>
+                    <td>${escapeHtml(displayValue(repair.status))}</td>
+                    <td>${escapeHtml(displayValue(repair.repair_description))}</td>
+                    <td>${escapeHtml(displayValue(repair.repair_date))}</td>
+                  </tr>
                 `).join("")}
               </tbody>
             </table>
           </div>`;
-      } else {
-        document.querySelector("#equipment-content").innerHTML = `
-          <div class="empty-state">
-            <span class="empty-icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none">
-                <path d="M11.5 3.2a4.2 4.2 0 0 0-5.3 5.3l-3.1 3.1a1.8 1.8 0 0 0 2.5 2.5l3.1-3.1a4.2 4.2 0 0 0 5.3-5.3L11.6 8l-2.2-2.2 2.1-2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" />
-              </svg>
-            </span>
-            <strong>No equipment details available.</strong>
-            <p>Equipment information can be added to this vessel record.</p>
-          </div>`;
+      }
+
+      let vesselLoadSequence = 0;
+
+      async function loadRepairHistory(vesselId, requestSequence) {
+        renderRepairHistoryState("Loading repair history...");
+
+        const { data: repairs, error } = await supabaseClient
+          .from("repairs")
+          .select("repair_title, status, repair_description, repair_date")
+          .eq("vessel_id", vesselId)
+          .order("repair_date", { ascending: false });
+
+        console.debug("Repair history query result.", {
+          vesselId,
+          requestSequence,
+          count: repairs ? repairs.length : 0,
+          error,
+        });
+
+        if (requestSequence !== vesselLoadSequence) {
+          console.debug("Ignoring outdated repair history query result.", {
+            vesselId,
+            requestSequence,
+            currentRequestSequence: vesselLoadSequence,
+          });
+          return;
+        }
+
+        if (error) {
+          console.error("Unable to load repair history.", error);
+          renderRepairHistoryState(
+            "Repair history could not be loaded.",
+            "Please try again later.",
+          );
+          return;
+        }
+
+        renderRepairHistory(repairs || []);
+      }
+
+      async function loadVessel() {
+        const requestSequence = ++vesselLoadSequence;
+        const vesselId = params.get("id");
+        if (!vesselId) {
+          showToast("No vessel was selected.");
+          return;
+        }
+
+        const { data: vessel, error } = await supabaseClient
+          .from("vessels")
+          .select("id, vessel_name, registration_number, vessel_type, length_m, gross_tonnage, engine_details, serial_number, pumps")
+          .eq("id", vesselId)
+          .maybeSingle();
+
+        if (requestSequence !== vesselLoadSequence) {
+          console.debug("Ignoring outdated vessel query result.", {
+            vesselId,
+            requestSequence,
+            currentRequestSequence: vesselLoadSequence,
+          });
+          return;
+        }
+
+        if (error) {
+          console.error("Unable to load vessel profile.", error);
+          showToast("The vessel profile could not be loaded.");
+          return;
+        }
+
+        if (!vessel) {
+          showToast("The selected vessel could not be found.");
+          return;
+        }
+
+        renderVessel(vessel);
+        await loadRepairHistory(vessel.id, requestSequence);
       }
 
       const tabs = [...document.querySelectorAll('[role="tab"]')];
@@ -1203,6 +1348,19 @@
         button.addEventListener("click", () => {
           showToast(`${button.dataset.comingSoon} is coming soon.`);
         });
+      });
+
+      initializeLogoutButtons();
+      initializeProtectedPage().then((authenticatedProfile) => {
+        if (!authenticatedProfile) {
+          return;
+        }
+
+        console.debug("Authenticated vessel profile user.", {
+          userId: authenticatedProfile.user.id,
+          role: authenticatedProfile.profile.role,
+        });
+        loadVessel();
       });
     </script>
   </body>

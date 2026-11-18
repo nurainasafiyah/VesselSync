@@ -1271,7 +1271,7 @@
             <span class="workspace-name">OBM Technic</span>
             <span class="workspace-status">Workspace active</span>
           </div>
-          <a class="logout-link" href="login-interface-staff-admin.html">
+          <a class="logout-link" href="index.html" data-logout>
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M8.1 4H4.4a1.4 1.4 0 0 0-1.4 1.4v9.2A1.4 1.4 0 0 0 4.4 16h3.7M12.2 6.2l3.8 3.8-3.8 3.8M7.1 10h8.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
             </svg>
@@ -1325,11 +1325,11 @@
                   </div>
                 </section>
               </div>
-              <div class="user-menu" aria-label="Signed in as Aina Rahman, Administrator">
-                <span class="avatar" aria-hidden="true">AR</span>
+              <div class="user-menu" data-auth-user-menu>
+                <span class="avatar" data-auth-initials aria-hidden="true"></span>
                 <span class="user-details">
-                  <strong>Aina Rahman</strong>
-                  <span>Administrator</span>
+                  <strong data-auth-full-name></strong>
+                  <span data-auth-role></span>
                 </span>
               </div>
             </div>
@@ -1338,7 +1338,7 @@
           <section class="welcome" aria-labelledby="welcome-heading">
             <div class="welcome-copy">
               <p>Here’s what’s happening with your fleet today.</p>
-              <h1 id="welcome-heading">Welcome back, <span>Aina</span></h1>
+              <h1 id="welcome-heading">Welcome back, <span data-auth-first-name></span></h1>
             </div>
             <p class="welcome-note">Your vessel operations at a glance</p>
           </section>
@@ -1579,9 +1579,7 @@
               ? "status-operational"
               : "status-maintenance";
             const profileUrl = new URL("vessel-profile.html", window.location.href);
-            Object.entries(vessel).forEach(([key, value]) => {
-              profileUrl.searchParams.set(key, value);
-            });
+            profileUrl.searchParams.set("id", vessel.id);
             return `
               <tr>
                 <td>
@@ -1735,7 +1733,12 @@
         });
       });
 
-      loadVessels();
+      initializeLogoutButtons();
+      initializeProtectedPage().then((authenticatedProfile) => {
+        if (authenticatedProfile) {
+          loadVessels();
+        }
+      });
     </script>
     <style>
       .visually-hidden {
